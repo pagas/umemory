@@ -4,12 +4,28 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
+const config = require('../../frontend/src/config/auth-config');
 
 // define the Express app
 const app = express();
 
 // the database
-const questions = [];
+const questions = [
+    {
+        id: 1,
+        title: "How do I make a sandwich?",
+        description: "I am trying very hard, but I do not know how to make a delicious sandwich. Can someone help me?",
+        answers: [{answer:"Just spread butter on the bread, and that is it."}]
+    },
+    {
+        id: 2,
+        title: "What is React?",
+        description: "I have been hearing a lot about React. What is it?",
+        answers: []
+    }
+];
 
 // enhance your app security with Helmet
 app.use(helmet());
@@ -42,21 +58,36 @@ app.get('/:id', (req, res) => {
     res.send(question[0]);
 });
 
+const checkJwt = jwt({
+    secret: jwksRsa.expressJwtSecret({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 5,
+        jwksUri: `https://${config.domain}/.well-known/jwks.json`
+    }),
+
+    // Validate the audience and the issuer.
+    audience: config.clientId,
+    issuer: `https://${config.domain}`,
+    algorithms: ['RS256']
+});
+
 // insert a new question
-app.post('/', (req, res) => {
+app.post('/', checkJwt, (req, res) => {
     const {title, description} = req.body;
     const newQuestion = {
         id: questions.length + 1,
         title,
         description,
         answers: [],
+        author: req.user.name,
     };
     questions.push(newQuestion);
     res.status(200).send();
 });
 
 // insert a new answer to a question
-app.post('/answer/:id', (req, res) => {
+app.post('/answer/:id', checkJwt, (req, res) => {
     const {answer} = req.body;
 
     const question = questions.filter(q => (q.id === parseInt(req.params.id)));
@@ -65,6 +96,7 @@ app.post('/answer/:id', (req, res) => {
 
     question[0].answers.push({
         answer,
+        author: req.user.name,
     });
 
     res.status(200).send();
