@@ -68,7 +68,7 @@ const checkJwt = jwt({
 
     // Validate the audience and the issuer.
     audience: config.clientId,
-    issuer: `https://${config.domain}`,
+    issuer: `https://${config.domain}/`,
     algorithms: ['RS256']
 });
 
