@@ -6,11 +6,11 @@ export default function() {
             }
         case 'development':
             return {
-                fullDomain: 'http://localhost:3000'
+                fullDomain: 'http://localhost:8081'
             }
         default:
             return {
-                fullDomain: 'http://localhost:3000'
+                fullDomain: 'http://localhost:8081'
             }
     }
 }

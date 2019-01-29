@@ -1,4 +1,5 @@
 //import dependencies
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -39,8 +40,12 @@ app.use(cors());
 // log HTTP requests
 app.use(morgan('combined'));
 
+//app.use(express.static(__dirname));
+var buildPath = path.join(__dirname, '../../frontend/build');
+app.use(express.static(buildPath));
+
 // retrieve all questions
-app.get('/', (req, res) => {
+app.get('/questions/getAll', (req, res) => {
     const qs = questions.map(q => ({
         id: q.id,
         title: q.title,
@@ -50,12 +55,26 @@ app.get('/', (req, res) => {
     res.send(qs);
 });
 
+app.get('/callback', (req, res) => {
+    console.log('callback called after authentication', res.params);
+    res.sendFile(path.join(buildPath, 'index.html'));
+})
+
+// app.get('/test', (req, res) => {
+//     console.log('test', res);
+//     res.sendFile(path.join(buildPath, 'index.html'));
+// })
+
 // get a specific question
 app.get('/:id', (req, res) => {
     const question = questions.filter(q => (q.id === parseInt(req.params.id)));
     if (question.length > 1) return res.status(500).send();
     if (question.length === 0) return res.status(404).send();
     res.send(question[0]);
+});
+
+app.get('/', function (req, res) {
+    res.sendFile(path.join(buildPath, 'index.html'));
 });
 
 const checkJwt = jwt({
